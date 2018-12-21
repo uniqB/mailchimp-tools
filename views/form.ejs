@@ -20,8 +20,7 @@
             <% if(typeof status !== 'undefined' && status === 'success') { %>
               <div class="alert alert-success">
                 <span>
-                  Cập nhật thành công
-                  <%= count %> liên hệ!
+                Success! Updated <%= count %> members!
                 </span>
               </div>
               <% } %>
@@ -29,7 +28,7 @@
               <% if(typeof status !== 'undefined' && status === 'error') { %>
                 <div class="alert alert-danger">
                   <span>
-                    Lỗi, hãy kiểm tra lại tham số!
+                    Error! Check input fields and try again.
                   </span>
                 </div>
                 <% } %>
@@ -44,7 +43,7 @@
               </div>
 
               <div class="form-group">
-                <label>Trạng thái</label>
+                <label>Status</label>
                 <select class="form-control" name="status" placeholder="Trạng thái">
                   <option value="subscribed">subscribed</option>
                   <option value="unsubscribed">unsubscribed</option>
@@ -53,7 +52,7 @@
 
 
               <div class="form-group">
-                <button id="btn-login" type="submit" class="btn btn-primary btn-sm">Gửi</button>
+                <button id="btn-login" type="submit" class="btn btn-primary btn-sm">Submit</button>
               </div>
 
             </form>
