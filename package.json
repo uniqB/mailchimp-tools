@@ -1,0 +1,18 @@
+{
+  "name": "mailchimp-tool",
+  "version": "1.0.0",
+  "description": "Mailchimp tool",
+  "main": "index.js",
+  "dependencies": {
+    "axios": "^0.18.0",
+    "bluebird": "^3.5.1",
+    "body-parser": "^1.18.3",
+    "ejs": "^2.6.1",
+    "express": "^4.16.3"
+  },
+  "author": "binh@dht.com.vn",
+  "license": "ISC",
+  "scripts": {
+    "start": "node index"
+  }
+}
