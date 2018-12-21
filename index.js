@@ -20,11 +20,11 @@ function updateMember(apiKey, member, status) {
     data: { status }
   })
     .then((response) => {
-      console.log('subscribed success', member.id);
+      console.log('update member success', member.id);
       return true;
     })
     .catch((error) => {
-      console.log('subscribed error', member.id, error);
+      console.log('update member error', member.id, error);
       return false;
     })
 }
@@ -37,25 +37,27 @@ function serialUpdateMembers(apiKey, members, status) {
   }, Promise.resolve([]));
 }
 
-function updateMembers(apiKey, listWebId, newStatus) {
+function updateMembers({ apiKey, listId, status, limit }) {
   // Find list by web_id
-  return getListByWebId(apiKey, listWebId).then(currentList => {
-    const listId = currentList.id;
-    const status = newStatus === 'subscribed' ? 'unsubscribed' : 'subscribed';
-    const fields = newStatus === 'subscribed' ? 'members.id,members.unsubscribe_reason' : 'members.id';
+  return getListByWebId(apiKey, listId).then(currentList => {
+    const listRealId = currentList.id;
+    const oldStatus = status === 'subscribed' ? 'unsubscribed' : 'subscribed';
+    const fields = status === 'subscribed' ? 'members.id,members.unsubscribe_reason' : 'members.id';
+    const url = `${mailchimpUrl}/lists/${listRealId}/members?count=${Number(limit) || maxItems}&status=${oldStatus}&fields=${fields}`;
 
     return axios({
       method: 'get',
-      url: `${mailchimpUrl}/lists/${listId}/members?count=${maxItems}&status=${status}&fields=${fields}`,
+      url: url,
       headers: { Authorization: `apikey ${apiKey}` }
     }).then((response) => {
       let members = response.data.members;
-      if (newStatus === 'subscribed') {
-        members = members.filter(m => m.unsubscribe_reason === 'N/A (Unsubscribed by admin)');
+      console.log(members);
+      if (status === 'subscribed') {
+        members = members.filter(m => !m.unsubscribe_reason || m.unsubscribe_reason === 'N/A (Unsubscribed by admin)');
       }
 
       members = members.map(m => {
-        m.list_id = listId;
+        m.list_id = listRealId;
         return m;
       });
 
@@ -65,7 +67,7 @@ function updateMembers(apiKey, listWebId, newStatus) {
         const start = i * subLen;
         const end = Math.min((i + 1) * subLen, members.length);
         const subMembers = members.slice(start, end);
-        promises.push(serialUpdateMembers(apiKey, subMembers, newStatus));
+        promises.push(serialUpdateMembers(apiKey, subMembers, status));
         if (end === members.length) break;
       }
 
@@ -115,9 +117,9 @@ app.get('/', function (req, res) {
 });
 
 app.post('/', function (req, res) {
-  // console.log(req.body);
+  console.log(req.body);
   if (req.body.apiKey && req.body.listId && req.body.status) {
-    updateMembers(req.body.apiKey, req.body.listId, req.body.status).then(count => {
+    updateMembers(req.body).then(count => {
       res.render('form', { count, status: count >= 0 ? 'success' : 'error', data: req.body });
     });
   } else {
