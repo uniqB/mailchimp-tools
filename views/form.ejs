@@ -17,7 +17,7 @@
         </div>
         <div class="panel-body">
           <div class="signup-container">
-            <% if(typeof status !== 'undefined' && status === 'success') { %>
+            <% if(status === 'success') { %>
               <div class="alert alert-success">
                 <span>
                 Success! Updated <%= count %> members!
@@ -25,7 +25,7 @@
               </div>
               <% } %>
 
-              <% if(typeof status !== 'undefined' && status === 'error') { %>
+              <% if(status === 'error') { %>
                 <div class="alert alert-danger">
                   <span>
                     Error! Check input fields and try again.
@@ -35,21 +35,25 @@
             <form action="" method="post" role="form">
               <div class="form-group">
                 <label>API Keys</label>
-                <input type="text" class="form-control" name="apiKey" placeholder="bf49c0cd6299a492fec1327a09c51xxx-us12">
+                <input type="text" class="form-control" name="apiKey" value="<%= data.apiKey %>" placeholder="bf49c0cd6299a492fec1327a09c51xxx-us12">
               </div>
               <div class="form-group">
                 <label>List ID</label>
-                <input type="text" class="form-control" name="listId" placeholder="6f23348xxx">
+                <input type="text" class="form-control" name="listId" value="<%= data.listId %>" placeholder="6f23348xxx">
               </div>
 
               <div class="form-group">
                 <label>Status</label>
-                <select class="form-control" name="status" placeholder="Trạng thái">
+                <select class="form-control" name="status" value="<%= data.status %>" placeholder="Trạng thái">
                   <option value="subscribed">subscribed</option>
                   <option value="unsubscribed">unsubscribed</option>
                 </select>
               </div>
 
+              <div class="form-group">
+                <label>Limit members</label>
+                <input type="text" class="form-control" name="limit" value="<%= data.limit %>"  placeholder="100">
+              </div>
 
               <div class="form-group">
                 <button id="btn-login" type="submit" class="btn btn-primary btn-sm">Submit</button>

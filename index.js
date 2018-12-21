@@ -9,7 +9,7 @@ const bodyParser = require('body-parser');
 const axios = require('axios');
 
 const mailchimpUrl = 'https://us12.api.mailchimp.com/3.0';
-const maxItems = 100;
+const maxItems = 2000;
 const maxConn = 10;
 
 function updateMember(apiKey, member, status) {
@@ -37,16 +37,18 @@ function serialUpdateMembers(apiKey, members, status) {
   }, Promise.resolve([]));
 }
 
-function updateMembers(apiKey, listId, newStatus) {
-  const status = newStatus === 'subscribed' ? 'unsubscribed' : 'subscribed';
-  const fields = newStatus === 'subscribed' ? 'members.id,members.unsubscribe_reason' : 'members.id';
+function updateMembers(apiKey, listWebId, newStatus) {
+  // Find list by web_id
+  return getListByWebId(apiKey, listWebId).then(currentList => {
+    const listId = currentList.id;
+    const status = newStatus === 'subscribed' ? 'unsubscribed' : 'subscribed';
+    const fields = newStatus === 'subscribed' ? 'members.id,members.unsubscribe_reason' : 'members.id';
 
-  return axios({
-    method: 'get',
-    url: `${mailchimpUrl}/lists/${listId}/members?count=${maxItems}&status=${status}&fields=${fields}`,
-    headers: { Authorization: `apikey ${apiKey}` }
-  })
-    .then((response) => {
+    return axios({
+      method: 'get',
+      url: `${mailchimpUrl}/lists/${listId}/members?count=${maxItems}&status=${status}&fields=${fields}`,
+      headers: { Authorization: `apikey ${apiKey}` }
+    }).then((response) => {
       let members = response.data.members;
       if (newStatus === 'subscribed') {
         members = members.filter(m => m.unsubscribe_reason === 'N/A (Unsubscribed by admin)');
@@ -72,12 +74,24 @@ function updateMembers(apiKey, listId, newStatus) {
         console.log('completed', count);
         return count;
       });
-    })
-    .catch((error) => {
-      console.log(error);
-      return -1;
-    })
+    });
+  }).catch((error) => {
+    console.log(error);
+    return -1;
+  })
 
+}
+
+function getListByWebId(apiKey, webId) {
+  return axios({
+    method: 'get',
+    url: `${mailchimpUrl}/lists?fields=lists.id,lists.web_id`,
+    headers: { Authorization: `apikey ${apiKey}` }
+  }).then(response => {
+    console.log(response.data.lists);
+    const list = response.data.lists.find(l => l.web_id === Number(webId));
+    return list || Promise.reject('unknown_web_id');
+  });
 }
 
 const app = express();
@@ -89,17 +103,25 @@ app.use(bodyParser.urlencoded({
 }));
 
 app.get('/', function (req, res) {
-  res.render('form', {});
+  res.render('form', {
+    status: null,
+    data: {
+      apiKey: null,
+      listId: null,
+      status: null,
+      limit: maxItems
+    }
+  });
 });
 
 app.post('/', function (req, res) {
   // console.log(req.body);
   if (req.body.apiKey && req.body.listId && req.body.status) {
     updateMembers(req.body.apiKey, req.body.listId, req.body.status).then(count => {
-      res.render('form', { count, status: count >= 0 ? 'success' : 'error' });
+      res.render('form', { count, status: count >= 0 ? 'success' : 'error', data: req.body });
     });
   } else {
-    res.render('form', { status: 'error' });
+    res.render('form', { status: 'error', data: req.body });
   }
 });
 
