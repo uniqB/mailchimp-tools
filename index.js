@@ -24,7 +24,7 @@ function requestApi(apiKey, path, method, data) {
 }
 
 function updateMember(apiKey, member, status) {
-  return requestApi(apiKey, `lists/${member.list_id}/members/${member.id}`, 'patch', data)
+  return requestApi(apiKey, `lists/${member.list_id}/members/${member.id}`, 'patch', { status })
     .then((response) => {
       console.log('update member success', member.id);
       return true;
