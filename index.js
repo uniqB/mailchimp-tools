@@ -12,13 +12,19 @@ const mailchimpUrl = 'https://us12.api.mailchimp.com/3.0';
 const maxItems = 2000;
 const maxConn = 10;
 
-function updateMember(apiKey, member, status) {
+function requestApi(apiKey, path, method, data) {
+  const apiServer = apiKey.split('-')[1];
+  const url = `${mailchimpUrl.replace('us12', apiServer)}/${path}`;
   return axios({
-    method: 'patch',
-    url: `${mailchimpUrl}/lists/${member.list_id}/members/${member.id}`,
+    method,
+    url,
     headers: { Authorization: `apikey ${apiKey}` },
-    data: { status }
-  })
+    data: data
+  });
+}
+
+function updateMember(apiKey, member, status) {
+  return requestApi(apiKey, `lists/${member.list_id}/members/${member.id}`, 'patch', data)
     .then((response) => {
       console.log('update member success', member.id);
       return true;
@@ -43,13 +49,9 @@ function updateMembers({ apiKey, listId, status, limit }) {
     const listRealId = currentList.id;
     const oldStatus = status === 'subscribed' ? 'unsubscribed' : 'subscribed';
     const fields = status === 'subscribed' ? 'members.id,members.unsubscribe_reason' : 'members.id';
-    const url = `${mailchimpUrl}/lists/${listRealId}/members?count=${Number(limit) || maxItems}&status=${oldStatus}&fields=${fields}`;
+    const path = `lists/${listRealId}/members?count=${Number(limit) || maxItems}&status=${oldStatus}&fields=${fields}`;
 
-    return axios({
-      method: 'get',
-      url: url,
-      headers: { Authorization: `apikey ${apiKey}` }
-    }).then((response) => {
+    return requestApi(apiKey, path, 'get').then((response) => {
       let members = response.data.members;
       console.log(members);
       if (status === 'subscribed') {
@@ -85,15 +87,12 @@ function updateMembers({ apiKey, listId, status, limit }) {
 }
 
 function getListByWebId(apiKey, webId) {
-  return axios({
-    method: 'get',
-    url: `${mailchimpUrl}/lists?fields=lists.id,lists.web_id`,
-    headers: { Authorization: `apikey ${apiKey}` }
-  }).then(response => {
-    console.log(response.data.lists);
-    const list = response.data.lists.find(l => l.web_id === Number(webId));
-    return list || Promise.reject('unknown_web_id');
-  });
+  return requestApi(apiKey, 'lists?fields=lists.id,lists.web_id', 'get')
+    .then(response => {
+      console.log(response.data.lists);
+      const list = response.data.lists.find(l => l.web_id === Number(webId));
+      return list || Promise.reject('unknown_web_id');
+    });
 }
 
 const app = express();
